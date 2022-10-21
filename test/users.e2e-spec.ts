@@ -172,18 +172,84 @@ describe('Users (e2e)', () => {
         });
     });
 
-    // describe('GET by Id', () => {
-    //     it('200 status', () => {
-    //         const testCreateAccount = {
-    //             username: 'PhenomenalMo',
-    //             email: 'mo123@mail.com',
-    //         };
-    //         return request(app.getHttpServer())
-    //         .get('/api/users')
-    //         .expect(201)
-    //         .then(({ body }) => {
-
-    //         })
-    //     });
-    // });
+    describe('GET by Id', () => {
+        it('200 status', () => {
+            const testCreateAccount = {
+                username: 'PhenomenalMo',
+                email: 'mo123@gmail.com',
+            };
+            return request(app.getHttpServer())
+            .post('/api/users')
+            .send(testCreateAccount)
+            .expect(201)
+            .then(
+                ({
+                    body: {
+                        newUser: {_id: id},
+                    },
+                }) => {
+                    return request(app.getHttpServer())
+                    .get(`/api/users/${id}`)
+                    .expect(200)
+                    .then(({ body }) => {
+                        expect(body).toBeInstanceOf(Object);
+                        expect(body).toHaveProperty('user');
+                        const { user } = body;
+                        expect(user).toHaveProperty('username', 'PhenomenalMo');
+                        expect(user).toHaveProperty('email', 'mo123@gmail.com');
+                        expect(user).toHaveProperty('_id', id);
+                        expect(user).toHaveProperty('location', expect.any(String));
+                        expect(user).toHaveProperty('avatar', expect.any(String));
+                        expect(user).toHaveProperty('bio', expect.any(String));
+                        expect(user).toHaveProperty('DOB', expect.any(String));
+                    });
+                },
+            );
+        });
+        it('400 status - id not valid', () => {
+            return request(app.getHttpServer())
+            .get('/api/users/notanid')
+            .expect(400)
+            .then(({ body: { message } }) => {
+                expect(message).toBe('Invalid User ID')
+            });
+        });
+        it('404 status - id not found', () => {
+            return request(app.getHttpServer())
+            .get('/api/users/6319c57ae80c5cc2c300318b') // valid id format, not in collection
+            .expect(404)
+            .then(({ body: { message } }) => {
+                expect(message).toBe('User ID not found')
+            });
+        });
+    });
+    describe('GET by Email', () => {
+        it('200 status', () => {
+            const testCreateAccount = {
+                username: 'PhenomenalMo',
+                email: 'mo123@gmail.com',
+            };
+            return request(app.getHttpServer())
+            .post('/api/users')
+            .send(testCreateAccount)
+            .expect(201)
+            .then(() => {
+                return request(app.getHttpServer())
+                .get('/api/users/login/mo123@gmail.com')
+                .expect(200)
+                .then(({ body }) => {
+                    expect(body).toBeInstanceOf(Object);
+                    expect(body).toHaveProperty('user');
+                    const { user } = body;
+                    expect(user).toHaveProperty('username', 'PhenomenalMo');
+                    expect(user).toHaveProperty('email', 'mo123@gmail.com');
+                    expect(user).toHaveProperty('_id', expect.any(String));
+                    expect(user).toHaveProperty('location', expect.any(String));
+                    expect(user).toHaveProperty('avatar', expect.any(String));
+                    expect(user).toHaveProperty('bio', expect.any(String));
+                    expect(user).toHaveProperty('DOB', expect.any(String));
+                });
+            });
+        });
+    });
 })

@@ -8,7 +8,7 @@ import {
     Patch,
     Post,
 } from "@nestjs/common";
-import { IsUrl } from "class-validator";
+import { isURL, IsUrl } from "class-validator";
 import mongoose from "mongoose";
 import { whiteListValidation } from "../validator";
 
@@ -27,12 +27,25 @@ async getUsers() {
 }
 @Get(':id')
 async getUserById(@Param() { id }) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new BadRequestException("Invalid User ID");
+    }
     const user = await this.usersService.getUserById(id);
+    if (!user) {
+        throw new NotFoundException("User ID not found");
+    }
     return { user };
 }
 @Get('/login/:email')
 async getUserByEmail(@Param() { email }) {
-    
+    if (!isURL(email)) {
+        throw new BadRequestException("Invalid User Email");
+    }
+    const user = await this.usersService.getUserByEmail(email);
+    if (!user) {
+        throw new NotFoundException("User email not found");
+    }
+    return { user };
 }
 @Post()
 async createNewUser(@Body(whiteListValidation) CreateUserDto: CreateUserDto) {
